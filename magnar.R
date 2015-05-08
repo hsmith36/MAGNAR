@@ -64,34 +64,33 @@ create_haplo_matrix <-function(haplo_file, var_file) {
 #merve_var <- "Merger"
 analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var) {
   
-  print("Start")
+  cat(" _____ _____ _____ _____ _____ _____ \n")
+  cat("|     |  _  |   __|   | |  _  | __  |\n")
+  cat("| | | |     |  |  | | | |     |    -|\n")
+  cat("|_|_|_|__|__|_____|_|___|__|__|__|__|\n\n")
+ 
   library(nlme)
   
+  cat("Importing Data\n")
   haplo_mtrx <- parse_haplo(haplo_file)
-  #View(haplo_mtrx)
   
   haplo_names <- parse_names(haplo_file)
-  #print(haplo_names)
   
   tx <- read.table(var_file, header=T)
   
-  #View(tx)
-  #print(colnames(tx))
-  
+  cat("Merging Files\n")
   haplo_tx <- merge(tx, haplo_mtrx, by.y="V1", by.x=merge_var, all=F)
   haplo_tx <- droplevels(subset(haplo_tx, haplo_tx[resp_var] > 0))
   
-  #View(haplo_tx)
-  
   num_pdg <- dim(haplo_mtrx)[2] - 1 #phylogenetic distribution group (move this?)
-  #print(num_pdg)
   
   count <- 0
   for(i in haplo_names) {
     for(j in haplo_names[i])
       count <- count + 1
   }
-  #print(count)
+  
+  cat("Running Analysis\n")
   output <- matrix(, nrow=count, ncol=3)
   
   sub <- matrix(, nrow=0, ncol=0)
@@ -102,13 +101,12 @@ analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, m
   sub$rndm1 <- factor(sub$rndm1)
   sub$rndm2 <- factor(sub$rndm2)
   
-  #Print percentage complete
+  cat("Percent Complete:\n")
   out_cnt <- 1
   for(i in 2:(num_pdg + 1)) { 
     
     name <- paste("V", i, sep="")
     sub$fix <- haplo_tx[,which(colnames(haplo_tx)==name)]
-    print(name)
     
     #fitting the linear mixed model
     lmm <- try(lme(resp_var~fix, random=~1|rndm1/rndm2, data=sub),T)
@@ -119,8 +117,12 @@ analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, m
       try(output[out_cnt,] <- c(j, p_val, (p_val*num_pdg)),T)
       out_cnt <- out_cnt + 1
     }
+    
+    if(((i-1) %% 100) == 0) 
+      cat(paste(round(((i-1)/num_pdg*100), digits=2), "%__", sep=""))
   }
   
+  cat("Finished!\n")
   return(output)
 }
   
