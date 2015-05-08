@@ -38,8 +38,6 @@ merge_tx <-function(file, haplo_matrix) {
   tx <- read.table(file, header=T)
   
   haplo_tx <- merge(tx, haplo_matrix, by.y="V1", by.x="Treatment", all=F)
-  
-  # if TAG < 0, throw out the value and should check for negative values
   haplo_tx <- droplevels(subset(haplo_tx, haplo_tx$tgl_fly>0))   
   
   return(haplo_tx)
@@ -53,15 +51,19 @@ create_haplo_matrix <-function(haplo_file, var_file) {
   return(haplo_tx)
 }
 
+analyze_OrthoMCL <- function(mcl_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var) {
+  
+  haplo_file <- "haplo_data.txt"
+  
+  py_submit <- paste(c("python convert_OrthoMCL.py", mcl_file, haplo_file), collapse=" ")
+  system(py_submit)
+  
+  return(analyze_mtrx(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var))
+}
+
 #'rndm1_eff is handled different from rndm2_eff
 #'
 #'
-#haplo_file <- haplo_50
-#var_file <- var_file
-#resp_var <- "tgl_fly"
-#rndm1_eff <- "Treatment"
-#rndm2_eff <- "Experiment"
-#merve_var <- "Merger"
 analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var) {
   
   cat(" _____ _____ _____ _____ _____ _____ \n")
