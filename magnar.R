@@ -51,25 +51,52 @@ create_haplo_matrix <-function(haplo_file, var_file) {
   return(haplo_tx)
 }
 
-analyze_OrthoMCL <- function(mcl_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var) {
+#'Model keys:
+#'lme:f1+f2|r1+r2 
+#'lme:f1|r1/r2    (DONE)
+#'lme:f1|r1+r2
+#'lme:f1|r1
+#'lm:f1
+#'
+analyze_OrthoMCL <- function(mcl_file, var_file, merge_var, model, resp1=NULL, resp2=NULL, rndm1=NULL, rndm2=NULL) {
+  
+  cat(" _____ _____ _____ _____ _____ _____ \n")
+  cat("|     |  _  |   __|   | |  _  | __  |\n")
+  cat("| | | |     |  |  | | | |     |    -|\n")
+  cat("|_|_|_|__|__|_____|_|___|__|__|__|__|\n")
   
   haplo_file <- "haplo_data.txt"
   
   py_submit <- paste(c("python convert_OrthoMCL.py", mcl_file, haplo_file), collapse=" ")
   system(py_submit)
   
-  return(analyze_mtrx(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var))
+  if(model == "lme:f1+f2|r1+r2")
+    mtrx <- analyze.ffrr(haplo_file, var_file, merge_var, resp1, resp2, rndm1, rndm2)
+  else if(model == "lme:f1|r1/r2") #DONE
+    mtrx <- analyze.frr.div(haplo_file, var_file, merge_var, resp1, rndm1, rndm2)
+  else if(model == "lme:f1|f1+r2")
+    mtrx <- analyze.frr.plus(haplo_file, var_file, merge_var, resp1, rndm1, rndm2)
+  else if(model == "lme:f1|r1")
+    mtrx <- analyze.fr(haplo_file, var_file, merge_var, resp1, rndm1)
+  else if(model == "lm:f1")
+    mtrx <- analyze.f(haplo_file, var_file, merge_var, resp1)
+  else 
+    print("Could not find a correct match for your model declaration")
+  
+  rm_submit <- paste("rm", haplo_file, sep=" ")
+  system(rm_submit)
+  return(mtrx)
 }
 
-#'rndm1_eff is handled different from rndm2_eff
-#'
-#'
-analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, merge_var) {
+analyze.ffrr <- function(haplo_file, var_file, merge_var, resp_var1, resp_var2, rndm1_eff, rndm2_eff) {
   
-  cat(" _____ _____ _____ _____ _____ _____ \n")
-  cat("|     |  _  |   __|   | |  _  | __  |\n")
-  cat("| | | |     |  |  | | | |     |    -|\n")
-  cat("|_|_|_|__|__|_____|_|___|__|__|__|__|\n\n")
+}
+
+analyze.frr.plus <- function(haplo_file, var_file, merge_var, resp_var, rndm1_eff, rndm2_eff) {
+  
+}
+
+analyze.frr.div <- function(haplo_file, var_file, merge_var, resp_var, rndm1_eff, rndm2_eff) {
  
   library(nlme)
   
@@ -77,6 +104,7 @@ analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, m
   haplo_mtrx <- parse_haplo(haplo_file)
   
   haplo_names <- parse_names(haplo_file)
+  #print(haplo_names)
   
   tx <- read.table(var_file, header=T)
   
@@ -93,7 +121,7 @@ analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, m
   }
   
   cat("Running Analysis\n")
-  output <- matrix(, nrow=count, ncol=3)
+  output <- matrix(, nrow=count, ncol=3) #this is where I define how many cols are in the final matrix
   
   sub <- matrix(, nrow=0, ncol=0)
   sub$resp_var <- haplo_tx[,which(colnames(haplo_tx)==resp_var)]
@@ -128,7 +156,13 @@ analyze_mtrx <- function(haplo_file, var_file, resp_var, rndm1_eff, rndm2_eff, m
   return(output)
 }
   
+analyze.fr <- function(haplo_file, var_file, merge_var, resp_var, rndm_eff) {
   
+}
+
+analyze.f <- function(haplo_file, var_file, merge_var, resp_var) {
+  
+}
   
   
   
